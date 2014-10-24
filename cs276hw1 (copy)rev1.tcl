@@ -5,6 +5,10 @@ set ns [new Simulator]
 set nf [open hw1.nam w]
 $ns namtrace-all $nf
 
+#Open the trace file (before you start the experiment!)
+set tf [open my_experimental_output.tr w]
+$ns trace-all $tf
+
 # Define a 'finish' procedure
 proc finish {} {
         global ns nf
@@ -75,67 +79,55 @@ proc attach-expoo-traffic { node sink size burst idle rate } {
 	return $traffic
 }
 
-proc finish {} {
-        global f0 f1 f2
-        #Close the output files
-        close $f0
-        close $f1
-        close $f2
-        #Call xgraph to display the results
-        exec xgraph out0.tr out1.tr out2.tr -geometry 800x400 &
-        exit 0
-}
-
-proc record {} {
-        global sink3 sink4 sink6 f0 f1 f2
-        #Get an instance of the simulator
-        set ns [Simulator instance]
-        #Set the time after which the procedure should be called again
-        set time 0.5
-        #How many bytes have been received by the traffic sinks?
-        set bw0 [$sink3 set bytes_]
-        set bw1 [$sink4 set bytes_]
-        set bw2 [$sink6 set bytes_]
-        #Get the current time
-        set now [$ns now]
-        #Calculate the bandwidth (in MBit/s) and write it to the files
-        puts $f0 "$now [expr $bw0/$time*8/1000000]"
-        puts $f1 "$now [expr $bw1/$time*8/1000000]"
-        puts $f2 "$now [expr $bw2/$time*8/1000000]"
-        #Reset the bytes_ values on the traffic sinks
-        $sink3 set bytes_ 0
-        $sink4 set bytes_ 0
-        $sink6 set bytes_ 0
-        #Re-schedule the procedure
-        $ns at [expr $now+$time] "record"
-}
-
-set sink3 [new Agent/LossMonitor]
-set sink4 [new Agent/LossMonitor]
-set sink6 [new Agent/LossMonitor]
-
-$ns attach-agent $n3 $sink3
+# Setup a TCP connection (n1 to n4)
+set tcp [new Agent/TCP]
+$tcp set class_ 1
+$ns attach-agent $n1 $tcp
+set sink4 [new Agent/TCPSink]
 $ns attach-agent $n4 $sink4
+$ns connect $tcp $sink4
+$tcp set fid_ 1
+
+# Setup a CBR over TCP connection (n1 to n4)
+set cbr [new Application/Traffic/CBR]
+$cbr attach-agent $tcp
+$cbr set type_ CBR
+$cbr set packet_size_ 1000
+$cbr set rate_ 1mb
+$cbr set random_ false
+
+# Setup a TCP connection 2 (n5 to n6)
+set tcp2 [new Agent/TCP]
+$tcp set class_ 1
+$ns attach-agent $n5 $tcp2
+set sink6 [new Agent/TCPSink]
 $ns attach-agent $n6 $sink6
+$ns connect $tcp2 $sink6
+$tcp set fid_ 1
 
-set source1 [attach-expoo-traffic $n1 $sink0 200 2s 1s 100k]
-set source5 [attach-expoo-traffic $n5 $sink1 200 2s 1s 200k]
+# Setup a CBR over TCP connection 2 (n5 to n6)
+set cbr2 [new Application/Traffic/CBR]
+$cbr2 attach-agent $tcp2
+$cbr2 set type_ CBR
+$cbr2 set packet_size_ 1000
+$cbr2 set rate_ 1mb
+$cbr2 set random_ false
 
-set f0 [open out0.tr w]
-set f1 [open out1.tr w]
-set f2 [open out2.tr w]
+# Schedule events for the CBR and FTP agents
+$ns at 0.1 "$cbr start"
+$ns at 0.1 "$cbr2 start"
+$ns at 4.5 "$cbr2 stop"
+$ns at 4.5 "$cbr stop"
 
 
 ####################################################################################
 # Call the finish procedure after 5 seconds simulation time
-$ns at 0.0 "record"
-$ns at 1.0 "$source0 start"
-$ns at 1.0 "$source1 start"
-$ns at 1.0 "$source2 start"
-$ns at 5.0 "$source0 stop"
-$ns at 5.0 "$source1 stop"
-$ns at 5.0 "$source2 stop"
-$ns at 6.0 "finish"
+$ns at 5.0 "finish"
 
 # Run the simulation
 $ns run
+
+# Close the trace file (after you finish the experiment!)
+close $tf
+
+
