@@ -118,8 +118,8 @@ $ns attach-agent $n3 $sink3
 $ns attach-agent $n4 $sink4
 $ns attach-agent $n6 $sink6
 
-set source1 [attach-expoo-traffic $n1 $sink0 200 2s 1s 100k]
-set source5 [attach-expoo-traffic $n5 $sink1 200 2s 1s 200k]
+set source1 [attach-expoo-traffic $n1 $sink4 200 2s 1s 100k]
+set source5 [attach-expoo-traffic $n5 $sink6 200 2s 1s 200k]
 
 set f0 [open out0.tr w]
 set f1 [open out1.tr w]
@@ -129,13 +129,11 @@ set f2 [open out2.tr w]
 ####################################################################################
 # Call the finish procedure after 5 seconds simulation time
 $ns at 0.0 "record"
-$ns at 1.0 "$source0 start"
-$ns at 1.0 "$source1 start"
-$ns at 1.0 "$source2 start"
-$ns at 5.0 "$source0 stop"
-$ns at 5.0 "$source1 stop"
-$ns at 5.0 "$source2 stop"
-$ns at 6.0 "finish"
+$ns at 10.0 "$source1 start"
+$ns at 10.0 "$source5 start"
+$ns at 50.0 "$source1 stop"
+$ns at 50.0 "$source5 stop"
+$ns at 60.0 "finish"
 
 # Run the simulation
 $ns run
