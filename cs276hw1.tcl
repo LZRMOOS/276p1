@@ -13,9 +13,9 @@ $ns trace-all $tf
 proc finish {} {
         global ns nf
         $ns flush-trace
-	# Close the trace file
+    # Close the trace file
         close $nf
-	# Execute nam on the trace file
+    # Execute nam on the trace file
         exec nam hw1.nam &
         exit 0
 }
@@ -58,25 +58,25 @@ $ns duplex-link-op $n3 $n6 orient right-down
 
 # Function
 proc attach-expoo-traffic { node sink size burst idle rate } {
-	# Get an instance of the simulator
-	set ns [Simulator instance]
+    # Get an instance of the simulator
+    set ns [Simulator instance]
 
-	# Create a UDP agent and attach it to the node
-	set source [new Agent/UDP]
-	$ns attach-agent $node $source
+    # Create a UDP agent and attach it to the node
+    set source [new Agent/UDP]
+    $ns attach-agent $node $source
 
-	# Create an Expoo traffic agent and set its configuration parameters
-	set traffic [new Application/Traffic/Exponential]
-	$traffic set packetSize_ $size
-	$traffic set burst_time_ $burst
-	$traffic set idle_time_ $idle
-	$traffic set rate_ $rate
+    # Create an Expoo traffic agent and set its configuration parameters
+    set traffic [new Application/Traffic/Exponential]
+    $traffic set packetSize_ $size
+    $traffic set burst_time_ $burst
+    $traffic set idle_time_ $idle
+    $traffic set rate_ $rate
         
     # Attach traffic source to the traffic generator
     $traffic attach-agent $source
-	# Connect the source and the sink
-	$ns connect $source $sink
-	return $traffic
+    # Connect the source and the sink
+    $ns connect $source $sink
+    return $traffic
 }
 
 proc finish {} {
